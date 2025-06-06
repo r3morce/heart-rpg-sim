@@ -1,9 +1,17 @@
+"""
+Combat simulation system for Heart RPG.
+
+This module handles combat mechanics, statistics tracking, and battle resolution
+between Player Characters (PCs) and Non-Player Characters (NPCs).
+"""
+
 import os
 import yaml
 import random
 import copy
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from dataclasses import dataclass
+
 from module.yaml_loader import get_all_players
 from module.npc import NPC
 from module.player import Player
@@ -12,19 +20,23 @@ from module.config import SimulationConfig
 
 @dataclass
 class CombatStats:
+    """Tracks statistics for a single combat encounter."""
+    
+    # Combat metrics
     rounds: int = 0
     pc_defeats: int = 0
     npc_defeats: int = 0
     total_damage_to_pcs: int = 0
     total_damage_to_npcs: int = 0
 
-    # Per-character tracking
+    # Per-character tracking dictionaries
     pc_individual_stats: Dict[str, Dict[str, int]] = None
     npc_individual_stats: Dict[str, Dict[str, int]] = None
     pc_damage_received: Dict[str, Dict[str, int]] = None
     pc_fallouts: Dict[str, Dict[str, int]] = None
 
     def __post_init__(self):
+        """Initialize tracking dictionaries if not provided."""
         if self.pc_individual_stats is None:
             self.pc_individual_stats = {}
         if self.npc_individual_stats is None:
@@ -37,6 +49,9 @@ class CombatStats:
 
 @dataclass
 class SimulationResults:
+    """Aggregates statistics across multiple combat simulations."""
+    
+    # Overall fight statistics
     total_fights: int = 0
     pc_victories: int = 0
     npc_victories: int = 0
@@ -44,13 +59,14 @@ class SimulationResults:
     average_rounds: float = 0.0
     total_rounds: int = 0
 
-    # Per-character statistics
+    # Aggregated per-character statistics
     pc_stats: Dict[str, Dict[str, int]] = None
     npc_stats: Dict[str, Dict[str, int]] = None
     pc_damage_taken: Dict[str, Dict[str, int]] = None
     pc_fallout_stats: Dict[str, Dict[str, int]] = None
 
     def __post_init__(self):
+        """Initialize statistics dictionaries if not provided."""
         if self.pc_stats is None:
             self.pc_stats = {}
         if self.npc_stats is None:
@@ -62,10 +78,12 @@ class SimulationResults:
 
     def add_fight_result(
         self, pc_won: bool, npc_won: bool, rounds: int, combat_stats: "CombatStats"
-    ):
+    ) -> None:
+        """Add results from a single combat to the aggregated statistics."""
         self.total_fights += 1
         self.total_rounds += rounds
 
+        # Track victory types
         if pc_won and not npc_won:
             self.pc_victories += 1
         elif npc_won and not pc_won:
@@ -75,7 +93,13 @@ class SimulationResults:
 
         self.average_rounds = self.total_rounds / self.total_fights
 
-        # Aggregate individual PC statistics
+        self._aggregate_pc_stats(combat_stats)
+        self._aggregate_npc_stats(combat_stats)
+        self._aggregate_damage_stats(combat_stats)
+        self._aggregate_fallout_stats(combat_stats)
+
+    def _aggregate_pc_stats(self, combat_stats: "CombatStats") -> None:
+        """Aggregate PC attack statistics."""
         for pc_name, stats in combat_stats.pc_individual_stats.items():
             if pc_name not in self.pc_stats:
                 self.pc_stats[pc_name] = {"attacks": 0, "hits": 0, "damage": 0}
@@ -84,7 +108,8 @@ class SimulationResults:
             self.pc_stats[pc_name]["hits"] += stats["hits"]
             self.pc_stats[pc_name]["damage"] += stats["damage"]
 
-        # Aggregate individual NPC statistics
+    def _aggregate_npc_stats(self, combat_stats: "CombatStats") -> None:
+        """Aggregate NPC attack statistics."""
         for npc_name, stats in combat_stats.npc_individual_stats.items():
             if npc_name not in self.npc_stats:
                 self.npc_stats[npc_name] = {"attacks": 0, "hits": 0, "damage": 0}
@@ -93,39 +118,38 @@ class SimulationResults:
             self.npc_stats[npc_name]["hits"] += stats["hits"]
             self.npc_stats[npc_name]["damage"] += stats["damage"]
 
-        # Aggregate PC damage received statistics
+    def _aggregate_damage_stats(self, combat_stats: "CombatStats") -> None:
+        """Aggregate PC damage received statistics."""
         for pc_name, damage_stats in combat_stats.pc_damage_received.items():
             if pc_name not in self.pc_damage_taken:
                 self.pc_damage_taken[pc_name] = {
-                    "blood": 0,
-                    "echo": 0,
-                    "mind": 0,
-                    "fortune": 0,
-                    "supplies": 0,
-                    "total": 0,
+                    "blood": 0, "echo": 0, "mind": 0, "fortune": 0, "supplies": 0, "total": 0
                 }
 
             for damage_type, amount in damage_stats.items():
                 self.pc_damage_taken[pc_name][damage_type] += amount
 
-        # Aggregate PC fallout statistics
+    def _aggregate_fallout_stats(self, combat_stats: "CombatStats") -> None:
+        """Aggregate PC fallout statistics."""
         for pc_name, fallout_stats in combat_stats.pc_fallouts.items():
             if pc_name not in self.pc_fallout_stats:
                 self.pc_fallout_stats[pc_name] = {
-                    "minor_fallouts": 0,
-                    "major_fallouts": 0,
-                    "deaths": 0,
+                    "minor_fallouts": 0, "major_fallouts": 0, "deaths": 0
                 }
 
-            self.pc_fallout_stats[pc_name]["minor_fallouts"] += fallout_stats[
-                "minor_fallouts"
-            ]
-            self.pc_fallout_stats[pc_name]["major_fallouts"] += fallout_stats[
-                "major_fallouts"
-            ]
-            self.pc_fallout_stats[pc_name]["deaths"] += fallout_stats["deaths"]
+            for stat_type, amount in fallout_stats.items():
+                self.pc_fallout_stats[pc_name][stat_type] += amount
 
-    def print_summary(self):
+    def print_summary(self) -> None:
+        """Print comprehensive simulation results."""
+        self._print_fight_summary()
+        self._print_pc_combat_stats()
+        self._print_pc_damage_stats()
+        self._print_pc_fallout_stats()
+        self._print_npc_stats()
+
+    def _print_fight_summary(self) -> None:
+        """Print overall fight statistics."""
         print(f"\n=== SIMULATION SUMMARY ===")
         print(f"Total fights: {self.total_fights}")
         print(
@@ -137,7 +161,8 @@ class SimulationResults:
         print(f"Draws: {self.draws} ({self.draws / self.total_fights * 100:.1f}%)")
         print(f"Average rounds per fight: {self.average_rounds:.1f}")
 
-        # PC individual statistics
+    def _print_pc_combat_stats(self) -> None:
+        """Print PC attack statistics."""
         print(f"\n=== PC STATISTICS ===")
         for pc_name, stats in self.pc_stats.items():
             attacks = stats["attacks"]
@@ -152,7 +177,8 @@ class SimulationResults:
             print(f"  Average damage per attack: {avg_damage:.2f}")
             print(f"  Total damage dealt: {damage:,}")
 
-        # PC damage taken statistics
+    def _print_pc_damage_stats(self) -> None:
+        """Print PC damage taken statistics."""
         print(f"\n=== PC DAMAGE TAKEN ===")
         for pc_name, damage_stats in self.pc_damage_taken.items():
             print(f"{pc_name}:")
@@ -163,7 +189,8 @@ class SimulationResults:
             print(f"  Supplies: {damage_stats['supplies']:,}")
             print(f"  Total: {damage_stats['total']:,}")
 
-        # PC fallout statistics
+    def _print_pc_fallout_stats(self) -> None:
+        """Print PC fallout statistics."""
         print(f"\n=== PC FALLOUT STATISTICS ===")
         for pc_name, fallout_stats in self.pc_fallout_stats.items():
             print(f"{pc_name}:")
@@ -171,7 +198,8 @@ class SimulationResults:
             print(f"  Major fallouts: {fallout_stats['major_fallouts']:,}")
             print(f"  Deaths: {fallout_stats['deaths']:,}")
 
-        # NPC individual statistics
+    def _print_npc_stats(self) -> None:
+        """Print NPC attack statistics."""
         print(f"\n=== NPC STATISTICS ===")
         for npc_name, stats in self.npc_stats.items():
             attacks = stats["attacks"]
