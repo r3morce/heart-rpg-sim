@@ -2,11 +2,7 @@ import argparse
 import logging
 import os
 
-from dotenv import load_dotenv
-
 from modules.output import print_hello
-
-load_dotenv()
 
 
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -33,8 +29,6 @@ def main():
 
     print_hello()
 
-    logging.debug("API_KEY from .env")
-    logging.debug(os.environ.get("API_KEY"))
 
     logging.info("Script ended")
 

@@ -10,15 +10,14 @@ help:
 setup:
 	python3 -m venv venv
 	pip install -r requirements.txt
+	source venv/bin/activate
 	@echo API_KEY=fillme > .env
 	@echo Created .env file
 
 run:
-	. venv/bin/activate
 	python3 main.py
 
 run_debug:
-	. venv/bin/activate
 	isort .
 	black .
 	python3 main.py --debug
