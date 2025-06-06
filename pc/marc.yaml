@@ -1,0 +1,30 @@
+name: "Marc"
+class: "Deadwalker"
+calling: "Pentinent"
+abilities:
+  delve: True
+  compel: False
+  discern: False
+  endure: False
+  evade: False
+  hunt: False
+  kill: False
+  mend: False
+  sneak: False
+domains:
+  cursed: False
+  desolate: True
+  haven: False
+  occult: False
+  religion: False
+  techology: False
+  warren: False
+  wild: False
+weapon: 6
+resistance:
+  blood: 0
+  echo: 0
+  mind: 0
+  fortune: 0
+  supplies: 0
+

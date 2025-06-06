@@ -1,0 +1,7 @@
+name: "Temple Guard Leader"
+weapon: 8
+domains:
+  - "protectionjjology"
+  - "haven"
+resistance: 12
+protection: 2

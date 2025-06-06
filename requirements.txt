@@ -9,4 +9,5 @@ platformdirs==3.10.0
 pluggy==1.2.0
 pyproject-api==1.5.3
 pytest==7.4.0
+PyYAML==6.0.1
 virtualenv==20.24.2

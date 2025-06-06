@@ -1,0 +1,7 @@
+name: "Temple Guard"
+weapon: 8
+domains:
+  - "religion"
+  - "haven"
+resistance: 6
+protection: 2

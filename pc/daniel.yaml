@@ -1,0 +1,29 @@
+name: "Daniel"
+class: "Cleaver"
+calling: "Enlightment"
+abilities:
+  compel: False
+  discern: False
+  endure: False
+  evade: False
+  hunt: False
+  kill: True
+  mend: False
+  sneak: False
+domains:
+  cursed: True
+  desolate: False
+  haven: False
+  occult: False
+  religion: False
+  techology: False
+  warren: False
+  wild: False
+weapon: 6
+resistance:
+  blood: 0
+  echo: 0
+  mind: 0
+  fortune: 0
+  supplies: 0
+

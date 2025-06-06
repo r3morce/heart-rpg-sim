@@ -1,0 +1,5 @@
+simulation:
+  number_of_fights: 10000
+  max_rounds_per_fight: 20
+  verbose_output: false
+  show_detailed_results: true
